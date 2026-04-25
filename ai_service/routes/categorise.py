@@ -14,18 +14,28 @@ def categorise():
 
     # Step 2: create prompt
     prompt = f"""
-    Classify the following into:
-    Low Risk, Medium Risk, High Risk, Critical Risk.
+You are a risk classification expert.
 
-    Return JSON:
-    {{
-      "category": "...",
-      "confidence": 0.0-1.0,
-      "reasoning": "..."
-    }}
+Classify the input strictly into ONE of:
+- Low Risk
+- Medium Risk
+- High Risk
+- Critical Risk
 
-    Input: {text}
-    """
+Rules:
+- Be consistent
+- Do not guess randomly
+- Base decision on severity
+
+Return ONLY JSON:
+{{
+  "category": "...",
+  "confidence": 0.0-1.0,
+  "reasoning": "short explanation"
+}}
+
+Input: {text}
+"""
 
     try:
         # Step 3: call AI

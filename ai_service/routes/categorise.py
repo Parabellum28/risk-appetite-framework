@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from ..services.groq_client import get_groq_response
+from services.groq_client import get_groq_response
 
 bp = Blueprint("categorise", __name__)
 

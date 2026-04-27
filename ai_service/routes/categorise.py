@@ -1,10 +1,14 @@
 from flask import Blueprint, request, jsonify
 from services.groq_client import get_groq_response
+import time
+from routes.health import record_response_time  
 
 bp = Blueprint("categorise", __name__)
 
 @bp.route("/categorise", methods=["POST"])
 def categorise():
+    start = time.time()
+
     data = request.json
     text = data.get("text")
 
@@ -14,38 +18,33 @@ def categorise():
 
     # Step 2: create prompt
     prompt = f"""
-You are a risk classification expert.
+    Classify the following into:
+    Low Risk, Medium Risk, High Risk, Critical Risk.
 
-Classify the input strictly into ONE of:
-- Low Risk
-- Medium Risk
-- High Risk
-- Critical Risk
+    Return JSON:
+    {{
+      "category": "...",
+      "confidence": 0.0-1.0,
+      "reasoning": "..."
+    }}
 
-Rules:
-- Be consistent
-- Do not guess randomly
-- Base decision on severity
-
-Return ONLY JSON:
-{{
-  "category": "...",
-  "confidence": 0.0-1.0,
-  "reasoning": "short explanation"
-}}
-
-Input: {text}
-"""
+    Input: {text}
+    """
 
     try:
         # Step 3: call AI
         result = get_groq_response(prompt)
 
+        end = time.time()
+        record_response_time(end - start)
+
         # Step 4: return result
         return jsonify(result)
 
     except Exception as e:
-        # Step 5: fallback
+        end = time.time()
+        record_response_time(end - start)
+
         return jsonify({
             "category": "Unknown",
             "confidence": 0.0,

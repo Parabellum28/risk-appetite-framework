@@ -1,7 +1,9 @@
+import time
 from flask import Blueprint, request, jsonify
 from services.groq_client import get_groq_response
 import chromadb
 from sentence_transformers import SentenceTransformer
+from routes.health import record_response_time
 
 bp = Blueprint("query", __name__)
 
@@ -15,9 +17,11 @@ collection = client.get_or_create_collection(name="risk_docs")
 
 @bp.route("/query", methods=["POST"])
 def query():
+    start = time.time()  
+
     data = request.json
     question = data.get("question")
-
+    
     if not question:
         return jsonify({"error": "Question is required"}), 400
 
@@ -51,6 +55,9 @@ def query():
 
         # Step 5: Call Groq
         answer = get_groq_response(prompt)
+
+        end = time.time()   
+        record_response_time(end - start)   
 
         # Step 6: Return result
         return jsonify({

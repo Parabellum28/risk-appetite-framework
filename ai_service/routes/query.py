@@ -1,8 +1,10 @@
+import hashlib
 import time
 from flask import Blueprint, request, jsonify
-from services.groq_client import get_groq_response
+from services.cache import get_cache, set_cache, increment_hit, increment_miss
 import chromadb
 from sentence_transformers import SentenceTransformer
+from services.groq_client import get_groq_response
 from routes.health import record_response_time
 
 bp = Blueprint("query", __name__)
@@ -21,9 +23,26 @@ def query():
 
     data = request.json
     question = data.get("question")
+    cache_key = hashlib.sha256(question.encode()).hexdigest()
     
     if not question:
         return jsonify({"error": "Question is required"}), 400
+    
+    cached = get_cache(cache_key)
+
+    print("CHECKING CACHE:", cache_key)
+    print("CACHE RESULT:", cached)
+
+    if cached:
+        increment_hit()
+        return jsonify({
+            "answer": cached["answer"],
+            "sources": cached["sources"],
+            "cached": True
+        })
+    
+    else:
+        increment_miss()
 
     try:
         # Step 1: Convert question to embedding
@@ -55,6 +74,12 @@ def query():
 
         # Step 5: Call Groq
         answer = get_groq_response(prompt)
+        print("SAVING TO CACHE:", cache_key)
+
+        set_cache(cache_key,{
+            "answer": answer,
+            "sources": docs
+        })
 
         end = time.time()   
         record_response_time(end - start)   
@@ -62,7 +87,8 @@ def query():
         # Step 6: Return result
         return jsonify({
             "answer": answer,
-            "sources": docs
+            "sources": docs,
+            "cached": False
         })
 
     except Exception as e:

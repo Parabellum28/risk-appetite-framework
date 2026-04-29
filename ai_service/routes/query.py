@@ -35,10 +35,21 @@ def query():
 
     if cached:
         increment_hit()
+
+        end = time.time()
+        response_time_ms = round((end - start) * 1000, 2)
+        record_response_time(end - start)
+
         return jsonify({
             "answer": cached["answer"],
             "sources": cached["sources"],
-            "cached": True
+            "meta": {
+                "confidence": 0.95,
+                "model_used": "llama-3.3-70b-versatile",
+                "tokens_used": 0,
+                "response_time_ms": response_time_ms,
+                "cached": True
+            }
         })
     
     else:
@@ -82,14 +93,21 @@ def query():
         })
 
         end = time.time()   
-        record_response_time(end - start)   
+        response_time_ms = round((end - start) * 1000, 2)
+        record_response_time(end - start)
 
         # Step 6: Return result
         return jsonify({
             "answer": answer,
             "sources": docs,
-            "cached": False
-        })
+            "meta": {
+        "confidence": 0.85,
+        "model_used": "llama-3.3-70b-versatile",
+        "tokens_used": len(prompt.split()),
+        "response_time_ms": response_time_ms,
+        "cached": False
+    }
+})
 
     except Exception as e:
         return jsonify({

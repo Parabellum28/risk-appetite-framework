@@ -18,15 +18,22 @@ def categorise():
 
     # Step 2: create prompt
     prompt = f"""
-    Classify the following into:
+    You are a cybersecurity risk analyst.
+
+    Classify the input into:
     Low Risk, Medium Risk, High Risk, Critical Risk.
 
-    Return JSON:
-    {{
-      "category": "...",
-      "confidence": 0.0-1.0,
-      "reasoning": "..."
-    }}
+    Rules:
+    - Be precise
+    - Give short reasoning
+    - Confidence must be realistic (0.0–1.0)
+
+    eturn JSON:
+{{
+  "category": "...",
+  "confidence": 0.0-1.0,
+  "reasoning": "..."
+}}
 
     Input: {text}
     """

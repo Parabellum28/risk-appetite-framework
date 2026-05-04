@@ -1,6 +1,6 @@
+import hashlib
 import redis
 import json
-import hashlib
 
 r = redis.Redis(host='localhost', port=6379, db=0)
 

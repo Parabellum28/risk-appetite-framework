@@ -48,7 +48,8 @@ def query():
                 "model_used": "llama-3.3-70b-versatile",
                 "tokens_used": 0,
                 "response_time_ms": response_time_ms,
-                "cached": True
+                "cached": True,
+                "is_fallback": False
             }
         })
     
@@ -72,7 +73,15 @@ def query():
 
         # Step 4: Create prompt
         prompt = f"""
-        Answer the question using ONLY the context below.
+        You are a risk management expert.
+
+        Answer the question using ONLY the context provided.
+
+        Rules:
+        - Do NOT add outside knowledge
+        - Keep answer clear and professional
+        - If answer not in context, say "Insufficient information"
+        - Use simple explanation when possible
 
         Context:
         {context}
@@ -84,10 +93,16 @@ def query():
         """
 
         # Step 5: Call Groq
-        answer = get_groq_response(prompt)
+        ai_result = get_groq_response(prompt)
+
+        answer = ai_result["content"]
+        is_fallback = ai_result["is_fallback"]
+
         print("SAVING TO CACHE:", cache_key)
 
-        set_cache(cache_key,{
+        if not is_fallback:
+
+            set_cache(cache_key,{
             "answer": answer,
             "sources": docs
         })
@@ -98,14 +113,16 @@ def query():
 
         # Step 6: Return result
         return jsonify({
-            "answer": answer,
+            "answer": ai_result["content"],   # 🔥 FIX HERE
             "sources": docs,
             "meta": {
-        "confidence": 0.85,
-        "model_used": "llama-3.3-70b-versatile",
-        "tokens_used": len(prompt.split()),
-        "response_time_ms": response_time_ms,
-        "cached": False
+                "confidence": 0.85,
+                "model_used": "llama-3.3-70b-versatile",
+                "tokens_used": len(prompt.split()),
+                "response_time_ms": response_time_ms,
+                "cached": False,
+                "is_fallback": ai_result["is_fallback"]
+        
     }
 })
 

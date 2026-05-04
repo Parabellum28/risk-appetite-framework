@@ -17,9 +17,22 @@ if not api_key:
 client = Groq(api_key=api_key)
 
 def get_groq_response(prompt):
-    response = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
-        messages=[{"role": "user", "content": prompt}]
-    )
+    try:
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[{"role": "user", "content": prompt}],
+            timeout=5 
+        )
 
-    return response.choices[0].message.content
+        return {
+            "content": response.choices[0].message.content,
+            "is_fallback": False
+        }
+
+    except Exception as e:
+        print("GROQ ERROR:", e)
+
+        return {
+            "content": "Unable to generate response at the moment. Please try again later.",
+            "is_fallback": True
+        }

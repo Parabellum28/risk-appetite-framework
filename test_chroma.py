@@ -1,39 +1,35 @@
 import chromadb
-from sentence_transformers import SentenceTransformer
 
-# Load embedding model
-model = SentenceTransformer("all-MiniLM-L6-v2")
-
-# Persistent Chroma databaseS
 client = chromadb.PersistentClient(path="./chroma_data")
-
-# Create/get collection
 collection = client.get_or_create_collection(name="risk_docs")
 
-# Sample documents
 docs = [
-    "High-risk assets require stronger controls.",
-    "Low-risk assets need standard monitoring.",
-    "Risk appetite defines acceptable exposure."
+    "High-risk assets require strong security controls such as encryption, strict access control, continuous monitoring, and regular audits to prevent breaches.",
+    "Low-risk systems can be managed with standard monitoring, periodic audits, and basic security practices without heavy controls.",
+    "Critical risks require immediate remediation, real-time monitoring, and incident response to prevent system failure or data loss.",
+    "Vulnerabilities should be identified through scans and patched quickly to reduce the risk of exploitation.",
+    "Risk appetite defines the acceptable level of risk an organization is willing to take in its operations.",
+    "Access control ensures only authorized users can access systems, reducing the chance of unauthorized activity.",
+    "Data encryption protects sensitive information both at rest and in transit from unauthorized access.",
+    "Incident response plans help organizations quickly detect, respond to, and recover from security incidents.",
+    "Regular security audits help identify weaknesses and improve overall system security posture.",
+    "Compliance ensures that systems follow required regulations and standards such as ISO or GDPR."
 ]
 
-# Create embeddings
-embeddings = model.encode(docs).tolist()
+# Avoid duplicate insert
+if collection.count() == 0:
+    collection.add(
+        documents=docs,
+        ids=[str(i) for i in range(len(docs))]
+    )
+    print("✅ Data seeded")
 
-# Store in Chroma
-collection.add(
-    documents=docs,
-    embeddings=embeddings,
-    ids=["1","2","3"]
-)
-
-# Test query
-question = "What applies to high-risk assets?"
-query_embedding = model.encode([question]).tolist()
-
+# Query
 results = collection.query(
-    query_embeddings=query_embedding,
+    query_texts=["What applies to high-risk assets?"],
     n_results=2
 )
 
-print(results["documents"])
+print("\n🔍 Results:")
+for doc in results["documents"][0]:
+    print("-", doc)

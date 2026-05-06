@@ -1,4 +1,5 @@
 ﻿import os
+import json
 from dotenv import load_dotenv
 from pathlib import Path
 from groq import Groq
@@ -21,13 +22,21 @@ def get_groq_response(prompt):
         response = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[{"role": "user", "content": prompt}],
-            timeout=5 
+            timeout=5
         )
 
-        return {
-            "content": response.choices[0].message.content,
-            "is_fallback": False
-        }
+        response_text = response.choices[0].message.content
+
+        # Remove markdown formatting
+        cleaned = response_text.replace("```json", "").replace("```", "").strip()
+
+        # Convert AI response string into JSON
+        parsed = json.loads(cleaned)
+
+        # Add fallback info
+        parsed["is_fallback"] = False
+
+        return parsed
 
     except Exception as e:
         print("GROQ ERROR:", e)
